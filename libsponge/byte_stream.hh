@@ -1,6 +1,7 @@
 #ifndef SPONGE_LIBSPONGE_BYTE_STREAM_HH
 #define SPONGE_LIBSPONGE_BYTE_STREAM_HH
 
+#include <functional>
 #include <string>
 #include <deque>
 
@@ -12,11 +13,14 @@
 class ByteStream {
   private:
     // Your code here -- add private members as necessary.
-    int capacity;
+    size_t capacity;
     std::deque<char> data;
-    int read_cnt;
-    int write_cnt;
+    size_t read_cnt;
+    size_t write_cnt;
     bool end_intput_flag = false;
+
+
+    std::function<void(const size_t&)> _read_cb;
 
     // Hint: This doesn't need to be a sophisticated data structure at
     // all, but if any of your tests are taking longer than a second,
@@ -86,6 +90,9 @@ class ByteStream {
     //! Total number of bytes popped
     size_t bytes_read() const;
     //!@}
+
+    // 读了之后可以扩大窗口
+    void set_read_callback(std::function<void(const size_t&)> func);
 };
 
 #endif  // SPONGE_LIBSPONGE_BYTE_STREAM_HH

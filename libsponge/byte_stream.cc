@@ -13,11 +13,16 @@ void DUMMY_CODE(Targs &&... /* unused */) {}
 
 using namespace std;
 
-ByteStream::ByteStream(const size_t cap): capacity(cap), data(), read_cnt(0), write_cnt(0){
+ByteStream::ByteStream(const size_t cap):
+ capacity(cap), data(), read_cnt(0), write_cnt(0), _read_cb(){
 }
 
 size_t ByteStream::write(const string &data_) {
     if (end_intput_flag) {
+        throw exception();
+    }
+
+    if (data_.size() == 0) {
         throw exception();
     }
 
@@ -37,10 +42,13 @@ string ByteStream::peek_output(const size_t len) const {
 
 //! \param[in] len bytes will be removed from the output side of the buffer
 void ByteStream::pop_output(const size_t len) {
-    for (size_t i = 0; i < len; i++) {
+    for (size_t i = 0; i < len; i ++) {
         data.pop_front();
     }
     read_cnt += len;
+    if (_read_cb) {
+        _read_cb(len);
+    }
 }
 
 //! Read (i.e., copy and then pop) the next "len" bytes of the stream
@@ -52,21 +60,42 @@ std::string ByteStream::read(const size_t len) {
         data.pop_front();
     }
     read_cnt += len;
+    if (_read_cb) {
+        _read_cb(len);
+    }
     return s;
 }
 
-void ByteStream::end_input() { this->end_intput_flag = true; }
+void ByteStream::end_input() {
+    this->end_intput_flag = true;
+}
 
 bool ByteStream::input_ended() const { return this->end_intput_flag; }
 
-size_t ByteStream::buffer_size() const { return data.size(); }
+size_t ByteStream::buffer_size() const {
+    return data.size();
+}
 
-bool ByteStream::buffer_empty() const { return data.empty(); }
+bool ByteStream::buffer_empty() const {
+    return data.empty();
+}
 
-bool ByteStream::eof() const { return end_intput_flag && data.empty(); }
+bool ByteStream::eof() const {
+    return end_intput_flag && data.empty();
+}
 
-size_t ByteStream::bytes_written() const { return write_cnt; }
+size_t ByteStream::bytes_written() const {
+    return write_cnt;
+}
 
-size_t ByteStream::bytes_read() const { return read_cnt; }
+size_t ByteStream::bytes_read() const {
+    return read_cnt;
+}
 
-size_t ByteStream::remaining_capacity() const { return capacity - data.size(); }
+size_t ByteStream::remaining_capacity() const {
+    return capacity - data.size();
+}
+
+void ByteStream::set_read_callback(function<void(const size_t&)> func) {
+    this->_read_cb = func;
+}
